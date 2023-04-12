@@ -1,4 +1,5 @@
 <?php
+
 /////////////////////////////////////////////////////////////////
 /// getID3() by James Heinrich <info@getid3.org>               //
 //  available at https://github.com/JamesHeinrich/getID3       //
@@ -15,23 +16,23 @@
 /////////////////////////////////////////////////////////////////
 
 if (!defined('GETID3_INCLUDEPATH')) { // prevent path-exposing attacks that access modules directly on public webservers
-	exit;
+    exit;
 }
 
 class getid3_wtv extends getid3_handler
 {
-	/**
-	 * @return bool
-	 */
-	public function Analyze() {
-		$info = &$this->getid3->info;
+    /**
+     * @return bool
+     */
+    public function Analyze()
+    {
+        $info = &$this->getid3->info;
 
-		$info['fileformat']          = 'wtv';
-		$info['video']['dataformat'] = 'wtv';
+        $info['fileformat'] = 'wtv';
+        $info['video']['dataformat'] = 'wtv';
 
-		$this->error('WTV (Windows Recorded TV Show) files not properly processed by this version of getID3() ['.$this->getid3->version().']');
+        $this->error('WTV (Windows Recorded TV Show) files not properly processed by this version of getID3() ['.$this->getid3->version().']');
 
-		return true;
-	}
-
+        return true;
+    }
 }
