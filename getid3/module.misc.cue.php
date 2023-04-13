@@ -29,304 +29,309 @@
 
 /**
  * A CueSheet class used to open and parse cuesheets.
- *
  */
-
-if (!defined('GETID3_INCLUDEPATH')) { // prevent path-exposing attacks that access modules directly on public webservers
-	exit;
+if (!defined('GETID3_INCLUDEPATH')) // prevent path-exposing attacks that access modules directly on public webservers
+{exit;
 }
 
 class getid3_cue extends getid3_handler
 {
-	public $cuesheet = array();
+    public $cuesheet = [];
 
-	/**
-	 * @return bool
-	 */
-	public function Analyze() {
-		$info = &$this->getid3->info;
+    /**
+     * @return bool
+     */
+    public function Analyze()
+    {
+        $info = &$this->getid3->info;
 
-		$info['fileformat'] = 'cue';
-		$this->readCueSheetFilename($info['filenamepath']);
-		$info['cue'] = $this->cuesheet;
-		return true;
-	}
+        $info['fileformat'] = 'cue';
+        $this->readCueSheetFilename($info['filenamepath']);
+        $info['cue'] = $this->cuesheet;
 
-	/**
-	 * @param string $filename
-	 *
-	 * @return array
-	 */
-	public function readCueSheetFilename($filename)
-	{
-		$filedata = file_get_contents($filename);
-		return $this->readCueSheet($filedata);
-	}
+        return true;
+    }
 
-	/**
-	 * Parses a cue sheet file.
-	 *
-	 * @param string $filedata
-	 *
-	 * @return array
-	 */
-	public function readCueSheet(&$filedata)
-	{
-		$cue_lines = array();
-		foreach (explode("\n", str_replace("\r", null, $filedata)) as $line)
-		{
-			if ( (strlen($line) > 0) && ($line[0] != '#'))
-			{
-				$cue_lines[] = trim($line);
-			}
-		}
-		$this->parseCueSheet($cue_lines);
+    /**
+     * @param string $filename
+     *
+     * @return array
+     */
+    public function readCueSheetFilename($filename)
+    {
+        $filedata = file_get_contents($filename);
 
-		return $this->cuesheet;
-	}
+        return $this->readCueSheet($filedata);
+    }
 
-	/**
-	 * Parses the cue sheet array.
-	 *
-	 * @param array $file - The cuesheet as an array of each line.
-	 */
-	public function parseCueSheet($file)
-	{
-		//-1 means still global, all others are track specific
-		$track_on = -1;
-		$currentFile = null;
+    /**
+     * Parses a cue sheet file.
+     *
+     * @param string $filedata
+     *
+     * @return array
+     */
+    public function readCueSheet(&$filedata)
+    {
+        $cue_lines = [];
+        foreach (explode("\n", str_replace("\r", null, $filedata)) as $line)
+        {
+            if ((strlen($line) > 0) && ($line[0] != '#'))
+            {
+                $cue_lines[] = trim($line);
+            }
+        }
+        $this->parseCueSheet($cue_lines);
 
-		foreach ($file as $line) {
-			list($key) = explode(' ', strtolower($line), 2);
-			switch ($key)
-			{
-				case 'catalog':
-				case 'cdtextfile':
-				case 'isrc':
-				case 'performer':
-				case 'songwriter':
-				case 'title':
-					$this->parseString($line, $track_on);
-					break;
-				case 'file':
-					$currentFile = $this->parseFile($line);
-					break;
-				case 'flags':
-					$this->parseFlags($line, $track_on);
-					break;
-				case 'index':
-				case 'postgap':
-				case 'pregap':
-					$this->parseIndex($line, $track_on);
-					break;
-				case 'rem':
-					$this->parseComment($line, $track_on);
-					break;
-				case 'track':
-					$track_on++;
-					$this->parseTrack($line, $track_on);
-					if (isset($currentFile)) // if there's a file
-					{
-						$this->cuesheet['tracks'][$track_on]['datafile'] = $currentFile;
-					}
-					break;
-				default:
-					//save discarded junk and place string[] with track it was found in
-					$this->parseGarbage($line, $track_on);
-					break;
-			}
-		}
-	}
+        return $this->cuesheet;
+    }
 
-	/**
-	 * Parses the REM command.
-	 *
-	 * @param string  $line - The line in the cue file that contains the TRACK command.
-	 * @param integer $track_on - The track currently processing.
-	 */
-	public function parseComment($line, $track_on)
-	{
-		$explodedline = explode(' ', $line, 3);
-		$comment_REM  = (isset($explodedline[0]) ? $explodedline[0] : '');
-		$comment_type = (isset($explodedline[1]) ? $explodedline[1] : '');
-		$comment_data = (isset($explodedline[2]) ? $explodedline[2] : '');
-		if (($comment_REM == 'REM') && $comment_type) {
-			$comment_type  = strtolower($comment_type);
-			$commment_data = trim($comment_data, ' "');
-			if ($track_on != -1) {
-				$this->cuesheet['tracks'][$track_on]['comments'][$comment_type][] = $comment_data;
-			} else {
-				$this->cuesheet['comments'][$comment_type][] = $comment_data;
-			}
-		}
-	}
+    /**
+     * Parses the cue sheet array.
+     *
+     * @param array $file - The cuesheet as an array of each line.
+     */
+    public function parseCueSheet($file)
+    {
+        //-1 means still global, all others are track specific
+        $track_on = -1;
+        $currentFile = null;
 
-	/**
-	 * Parses the FILE command.
-	 *
-	 * @param string $line - The line in the cue file that contains the FILE command.
-	 *
-	 * @return array - Array of FILENAME and TYPE of file..
-	 */
-	public function parseFile($line)
-	{
-		$line =            substr($line, strpos($line, ' ') + 1);
-		$type = strtolower(substr($line, strrpos($line, ' ')));
+        foreach ($file as $line)
+        {
+            list($key) = explode(' ', strtolower($line), 2);
+            switch ($key)
+            {
+                case 'catalog':
+                case 'cdtextfile':
+                case 'isrc':
+                case 'performer':
+                case 'songwriter':
+                case 'title':
+                    $this->parseString($line, $track_on);
+                    break;
+                case 'file':
+                    $currentFile = $this->parseFile($line);
+                    break;
+                case 'flags':
+                    $this->parseFlags($line, $track_on);
+                    break;
+                case 'index':
+                case 'postgap':
+                case 'pregap':
+                    $this->parseIndex($line, $track_on);
+                    break;
+                case 'rem':
+                    $this->parseComment($line, $track_on);
+                    break;
+                case 'track':
+                    $track_on++;
+                    $this->parseTrack($line, $track_on);
+                    if (isset($currentFile)) // if there's a file
+                    {
+                        $this->cuesheet['tracks'][$track_on]['datafile'] = $currentFile;
+                    }
+                    break;
+                default:
+                    //save discarded junk and place string[] with track it was found in
+                    $this->parseGarbage($line, $track_on);
+                    break;
+            }
+        }
+    }
 
-		//remove type
-		$line = substr($line, 0, strrpos($line, ' ') - 1);
+    /**
+     * Parses the REM command.
+     *
+     * @param string $line     - The line in the cue file that contains the TRACK command.
+     * @param int    $track_on - The track currently processing.
+     */
+    public function parseComment($line, $track_on)
+    {
+        $explodedline = explode(' ', $line, 3);
+        $comment_REM = (isset($explodedline[0]) ? $explodedline[0] : '');
+        $comment_type = (isset($explodedline[1]) ? $explodedline[1] : '');
+        $comment_data = (isset($explodedline[2]) ? $explodedline[2] : '');
+        if (($comment_REM == 'REM') && $comment_type)
+        {
+            $comment_type = strtolower($comment_type);
+            $commment_data = trim($comment_data, ' "');
+            if ($track_on != -1)
+            {
+                $this->cuesheet['tracks'][$track_on]['comments'][$comment_type][] = $comment_data;
+            }
+            else
+            {
+                $this->cuesheet['comments'][$comment_type][] = $comment_data;
+            }
+        }
+    }
 
-		//if quotes around it, remove them.
-		$line = trim($line, '"');
+    /**
+     * Parses the FILE command.
+     *
+     * @param string $line - The line in the cue file that contains the FILE command.
+     *
+     * @return array - Array of FILENAME and TYPE of file..
+     */
+    public function parseFile($line)
+    {
+        $line = substr($line, strpos($line, ' ') + 1);
+        $type = strtolower(substr($line, strrpos($line, ' ')));
 
-		return array('filename'=>$line, 'type'=>$type);
-	}
+        //remove type
+        $line = substr($line, 0, strrpos($line, ' ') - 1);
 
-	/**
-	 * Parses the FLAG command.
-	 *
-	 * @param string  $line - The line in the cue file that contains the TRACK command.
-	 * @param integer $track_on - The track currently processing.
-	 */
-	public function parseFlags($line, $track_on)
-	{
-		if ($track_on != -1)
-		{
-			foreach (explode(' ', strtolower($line)) as $type)
-			{
-				switch ($type)
-				{
-					case 'flags':
-						// first entry in this line
-						$this->cuesheet['tracks'][$track_on]['flags'] = array(
-							'4ch'  => false,
-							'data' => false,
-							'dcp'  => false,
-							'pre'  => false,
-							'scms' => false,
-						);
-						break;
-					case 'data':
-					case 'dcp':
-					case '4ch':
-					case 'pre':
-					case 'scms':
-						$this->cuesheet['tracks'][$track_on]['flags'][$type] = true;
-						break;
-					default:
-						break;
-				}
-			}
-		}
-	}
+        //if quotes around it, remove them.
+        $line = trim($line, '"');
 
-	/**
-	 * Collect any unidentified data.
-	 *
-	 * @param string  $line - The line in the cue file that contains the TRACK command.
-	 * @param integer $track_on - The track currently processing.
-	 */
-	public function parseGarbage($line, $track_on)
-	{
-		if ( strlen($line) > 0 )
-		{
-			if ($track_on == -1)
-			{
-				$this->cuesheet['garbage'][] = $line;
-			}
-			else
-			{
-				$this->cuesheet['tracks'][$track_on]['garbage'][] = $line;
-			}
-		}
-	}
+        return ['filename'=>$line, 'type'=>$type];
+    }
 
-	/**
-	 * Parses the INDEX command of a TRACK.
-	 *
-	 * @param string  $line - The line in the cue file that contains the TRACK command.
-	 * @param integer $track_on - The track currently processing.
-	 */
-	public function parseIndex($line, $track_on)
-	{
-		$type = strtolower(substr($line, 0, strpos($line, ' ')));
-		$line =            substr($line, strpos($line, ' ') + 1);
-		$number = 0;
+    /**
+     * Parses the FLAG command.
+     *
+     * @param string $line     - The line in the cue file that contains the TRACK command.
+     * @param int    $track_on - The track currently processing.
+     */
+    public function parseFlags($line, $track_on)
+    {
+        if ($track_on != -1)
+        {
+            foreach (explode(' ', strtolower($line)) as $type)
+            {
+                switch ($type)
+                {
+                    case 'flags':
+                        // first entry in this line
+                        $this->cuesheet['tracks'][$track_on]['flags'] = [
+                            '4ch'  => false,
+                            'data' => false,
+                            'dcp'  => false,
+                            'pre'  => false,
+                            'scms' => false,
+                        ];
+                        break;
+                    case 'data':
+                    case 'dcp':
+                    case '4ch':
+                    case 'pre':
+                    case 'scms':
+                        $this->cuesheet['tracks'][$track_on]['flags'][$type] = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
 
-		if ($type == 'index')
-		{
-			//read the index number
-			$number = intval(substr($line, 0, strpos($line, ' ')));
-			$line   =        substr($line, strpos($line, ' ') + 1);
-		}
+    /**
+     * Collect any unidentified data.
+     *
+     * @param string $line     - The line in the cue file that contains the TRACK command.
+     * @param int    $track_on - The track currently processing.
+     */
+    public function parseGarbage($line, $track_on)
+    {
+        if (strlen($line) > 0)
+        {
+            if ($track_on == -1)
+            {
+                $this->cuesheet['garbage'][] = $line;
+            }
+            else
+            {
+                $this->cuesheet['tracks'][$track_on]['garbage'][] = $line;
+            }
+        }
+    }
 
-		//extract the minutes, seconds, and frames
-		$explodedline = explode(':', $line);
-		$minutes = (isset($explodedline[0]) ? $explodedline[0] : '');
-		$seconds = (isset($explodedline[1]) ? $explodedline[1] : '');
-		$frames  = (isset($explodedline[2]) ? $explodedline[2] : '');
+    /**
+     * Parses the INDEX command of a TRACK.
+     *
+     * @param string $line     - The line in the cue file that contains the TRACK command.
+     * @param int    $track_on - The track currently processing.
+     */
+    public function parseIndex($line, $track_on)
+    {
+        $type = strtolower(substr($line, 0, strpos($line, ' ')));
+        $line = substr($line, strpos($line, ' ') + 1);
+        $number = 0;
 
-		switch ($type) {
-			case 'index':
-				$this->cuesheet['tracks'][$track_on][$type][$number] = array('minutes'=>intval($minutes), 'seconds'=>intval($seconds), 'frames'=>intval($frames));
-				break;
-			case 'pregap':
-			case 'postgap':
-				$this->cuesheet['tracks'][$track_on][$type]          = array('minutes'=>intval($minutes), 'seconds'=>intval($seconds), 'frames'=>intval($frames));
-				break;
-		}
-	}
+        if ($type == 'index')
+        {
+            //read the index number
+            $number = intval(substr($line, 0, strpos($line, ' ')));
+            $line = substr($line, strpos($line, ' ') + 1);
+        }
 
-	/**
-	 * @param string $line
-	 * @param int    $track_on
-	 */
-	public function parseString($line, $track_on)
-	{
-		$category = strtolower(substr($line, 0, strpos($line, ' ')));
-		$line     =            substr($line, strpos($line, ' ') + 1);
+        //extract the minutes, seconds, and frames
+        $explodedline = explode(':', $line);
+        $minutes = (isset($explodedline[0]) ? $explodedline[0] : '');
+        $seconds = (isset($explodedline[1]) ? $explodedline[1] : '');
+        $frames = (isset($explodedline[2]) ? $explodedline[2] : '');
 
-		//get rid of the quotes
-		$line = trim($line, '"');
+        switch ($type)
+        {
+            case 'index':
+                $this->cuesheet['tracks'][$track_on][$type][$number] = ['minutes'=>intval($minutes), 'seconds'=>intval($seconds), 'frames'=>intval($frames)];
+                break;
+            case 'pregap':
+            case 'postgap':
+                $this->cuesheet['tracks'][$track_on][$type] = ['minutes'=>intval($minutes), 'seconds'=>intval($seconds), 'frames'=>intval($frames)];
+                break;
+        }
+    }
 
-		switch ($category)
-		{
-			case 'catalog':
-			case 'cdtextfile':
-			case 'isrc':
-			case 'performer':
-			case 'songwriter':
-			case 'title':
-				if ($track_on == -1)
-				{
-					$this->cuesheet[$category] = $line;
-				}
-				else
-				{
-					$this->cuesheet['tracks'][$track_on][$category] = $line;
-				}
-				break;
-			default:
-				break;
-		}
-	}
+    /**
+     * @param string $line
+     * @param int    $track_on
+     */
+    public function parseString($line, $track_on)
+    {
+        $category = strtolower(substr($line, 0, strpos($line, ' ')));
+        $line = substr($line, strpos($line, ' ') + 1);
 
-	/**
-	 * Parses the TRACK command.
-	 *
-	 * @param string  $line - The line in the cue file that contains the TRACK command.
-	 * @param integer $track_on - The track currently processing.
-	 */
-	public function parseTrack($line, $track_on)
-	{
-		$line = substr($line, strpos($line, ' ') + 1);
-		$track = ltrim(substr($line, 0, strpos($line, ' ')), '0');
+        //get rid of the quotes
+        $line = trim($line, '"');
 
-		//find the data type.
-		$datatype = strtolower(substr($line, strpos($line, ' ') + 1));
+        switch ($category)
+        {
+            case 'catalog':
+            case 'cdtextfile':
+            case 'isrc':
+            case 'performer':
+            case 'songwriter':
+            case 'title':
+                if ($track_on == -1)
+                {
+                    $this->cuesheet[$category] = $line;
+                }
+                else
+                {
+                    $this->cuesheet['tracks'][$track_on][$category] = $line;
+                }
+                break;
+            default:
+                break;
+        }
+    }
 
-		$this->cuesheet['tracks'][$track_on] = array('track_number'=>$track, 'datatype'=>$datatype);
-	}
+    /**
+     * Parses the TRACK command.
+     *
+     * @param string $line     - The line in the cue file that contains the TRACK command.
+     * @param int    $track_on - The track currently processing.
+     */
+    public function parseTrack($line, $track_on)
+    {
+        $line = substr($line, strpos($line, ' ') + 1);
+        $track = ltrim(substr($line, 0, strpos($line, ' ')), '0');
 
+        //find the data type.
+        $datatype = strtolower(substr($line, strpos($line, ' ') + 1));
+
+        $this->cuesheet['tracks'][$track_on] = ['track_number'=>$track, 'datatype'=>$datatype];
+    }
 }
-
