@@ -15,5 +15,7 @@ disabled:
   - symfony_braces
 
 finder:
+  name: "*.php"
   exclude:
     - "vendor"
+    - "getid3"
