@@ -16,3 +16,7 @@ disabled:
   - psr2_braces
   - psr12_braces
   - symfony_braces
+
+finder:
+  exclude:
+    - "vendor"
