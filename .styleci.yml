@@ -12,7 +12,6 @@ enabled:
   - allman_braces
 
 disabled:
-  - laravel_braces
   - psr2_braces
   - psr12_braces
   - symfony_braces
