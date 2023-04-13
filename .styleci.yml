@@ -10,9 +10,11 @@ use-tabs: false
 
 enabled:
   - allman_braces
+  - long_array_syntax
 
 disabled:
   - symfony_braces
+  - short_array_syntax
 
 finder:
   name: "*.php"
