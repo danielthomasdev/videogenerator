@@ -273,7 +273,7 @@ Replace the following code with the following code to use OpenAI's GPT-3.5-Turbo
             <h2>Video</h2>
             <video controls>
                 <source src="<?= $vid_tag_path ?>" type="video/mp4">
-                Your browser does not support the video tag.
+                Your browser does not support the video tag..
             </video>
         </div>
     </div>
