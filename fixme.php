@@ -11,7 +11,7 @@
         $leap_bearer = getenv('LEAP_BEARER');
         $curl = curl_init();
 
-        $data = [
+        $data = array(
             'prompt'         => "$prompt, 16K resolution, 8k resolution, DeviantArt, 4k detailed post processing, atmospheric, hyper realistic, 8k, epic composition, cinematic",
             'negativePrompt' => 'asymmetric, watermarks',
             'steps'          => 50,
@@ -21,9 +21,9 @@
             'promptStrength' => 7,
             'seed'           => mt_rand(1000000, 9999999),
             'restoreFaces'   => true,
-        ];
+        );
         $model = 'd66b1686-5e5d-43b2-a2e7-d295d679917c';
-        curl_setopt_array($curl, [
+        curl_setopt_array($curl, array(
             CURLOPT_URL            => "https://api.leapml.dev/api/v1/images/models/$model/inferences",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING       => '',
@@ -33,12 +33,12 @@
             CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST  => 'POST',
             CURLOPT_POSTFIELDS     => json_encode($data),
-            CURLOPT_HTTPHEADER     => [
+            CURLOPT_HTTPHEADER     => array(
                 'accept: application/json',
                 "authorization: Bearer $leap_bearer",
                 'content-type: application/json',
-            ],
-        ]);
+            ),
+        ));
 
         $response = curl_exec($curl);
 
@@ -49,7 +49,7 @@
         while (true)
         {
             $curl = curl_init();
-            curl_setopt_array($curl, [
+            curl_setopt_array($curl, array(
                 CURLOPT_URL            => "https://api.leapml.dev/api/v1/images/models/$model/inferences/$photo_id",
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
@@ -58,12 +58,12 @@
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST  => 'GET',
-                CURLOPT_HTTPHEADER     => [
+                CURLOPT_HTTPHEADER     => array(
                     'accept: application/json',
                     "authorization: Bearer $leap_bearer",
                     'content-type: application/json',
-                ],
-            ]);
+                ),
+            ));
 
             $response = curl_exec($curl);
 
@@ -92,23 +92,23 @@
                     'max_tokens' => 1250,
                 ]), true);
             */
-        $complete = json_decode($open_ai->chat([
+        $complete = json_decode($open_ai->chat(array(
             'model'    => 'gpt-3.5-turbo',
-            'messages' => [
-                [
+            'messages' => array(
+                array(
                     'role'    => 'system',
                     'content' => 'You are a storyteller that loves to write articles about subjects. Create an article about whatever I send and make sure that it is interesting.',
-                ],
-                [
+                ),
+                array(
                     'role'    => 'user',
                     'content' => $_POST['makeItAbout'],
-                ],
-            ],
+                ),
+            ),
             'temperature'       => 1.0,
             'max_tokens'        => 4000,
             'frequency_penalty' => 0,
             'presence_penalty'  => 0,
-        ]), true);
+        )), true);
         //$text_article = $complete['choices'][0]['text']; //This way was for completions and not chat
         $text_article = str_replace('"', '', $complete['choices'][0]['message']['content']);
     }
@@ -120,17 +120,17 @@
         $apiKey = getenv('XI_API_KEY');
         //replace double quotes with single quotes from $_POST['text_article']
         $article = $_POST['text_article'].' Thanks for watching, and remember to follow for more content like this!';
-        $data = json_encode(['text' => $article]);
+        $data = json_encode(array('text' => $article));
         $title = strtoupper($_POST['videoTitle']);
         $ch = curl_init($url);
 
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'accept: audio/mpeg',
             "xi-api-key: $apiKey",
             'Content-Type: application/json',
-        ]);
+        ));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
         $response = curl_exec($ch);
@@ -156,8 +156,8 @@
         }
         //round down
 
-        $photo_ids = [];
-        $photo_paths = [];
+        $photo_ids = array();
+        $photo_paths = array();
 
         foreach (range(1, $image_count) as $i)
         {
@@ -177,10 +177,10 @@
             $photo_paths[] = $image_file;
             file_put_contents($image_file, $image);
             $stmt = $pdo->prepare('INSERT INTO photos (video_id, url) VALUES (:video_id, :url)');
-            $stmt->execute([
+            $stmt->execute(array(
                 'video_id' => $id,
                 'url'      => $image_url,
-            ]);
+            ));
             $photo_ids[] = $pdo->lastInsertId();
         }
 
