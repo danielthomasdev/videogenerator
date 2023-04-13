@@ -11,9 +11,6 @@ use-tabs: false
 enabled:
   - allman_braces
 
-disabled:
-  - psr12_braces
-
 finder:
   exclude:
     - "vendor"
