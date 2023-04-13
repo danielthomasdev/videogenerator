@@ -1,0 +1,18 @@
+risky: false
+
+version: 8.1
+
+preset: recommended
+
+tab-width: 4
+
+use-tabs: false
+
+enabled:
+  - allman_braces
+
+disabled:
+  - laravel_braces
+  - psr2_braces
+  - psr12_braces
+  - symfony_braces
