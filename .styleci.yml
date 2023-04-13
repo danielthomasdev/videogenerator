@@ -11,6 +11,9 @@ use-tabs: false
 enabled:
   - allman_braces
 
+disabled:
+  - symfony_braces
+
 finder:
   exclude:
     - "vendor"
