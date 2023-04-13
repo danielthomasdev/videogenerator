@@ -17,3 +17,4 @@ disabled:
 finder:
   exclude:
     - "vendor"
+    - "getid3"
